@@ -145,6 +145,28 @@ _
 ---
 - true
 ...
+--
+-- Ensure that retries_count work
+--
+start = fiber.time()
+---
+...
+_, e = rs1:callro('sleep', {2}, {timeout = 1, retries_count = 5})
+---
+...
+e.trace = nil
+---
+...
+e
+---
+- type: ClientError
+  code: 78
+  message: Timeout exceeded
+...
+fiber.time() - start > 5
+---
+- true
+...
 _ = test_run:switch("default")
 ---
 ...

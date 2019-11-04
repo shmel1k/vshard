@@ -389,12 +389,21 @@ local function replicaset_template_multicallro(prefer_replica, balance)
         local timeout = opts.timeout or consts.CALL_TIMEOUT_MAX
         local net_status, storage_status, retval, err, replica
         local end_time = fiber.time() + timeout
-        while not net_status and timeout > 0 do
+        local retries_count = opts.retries_count or consts.RETRIES_COUNT
+        while not net_status and (timeout > 0 or retry_count > 0) do
+            if retries_count == 0 then
+                -- Do not overwrite timeout if retries count > 0.
+                -- We guarantee that we will try to call N times
+                -- even if some timeouts or network issues occurr.
+                opts.timeout = timeout
+            end
+            if retries_count > 0 then
+                retries_count = retries_count - 1
+            end
             replica, err = pick_next_replica(replicaset)
             if not replica then
                 return nil, err
             end
-            opts.timeout = timeout
             net_status, storage_status, retval, err =
                 replica_call(replica, func, args, opts)
             timeout = end_time - fiber.time()

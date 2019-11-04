@@ -54,6 +54,15 @@ e
 _ = rs1:callro('sleep', {4}, {timeout = 100})
 _
 
+--
+-- Ensure that retries_count work
+--
+start = fiber.time()
+_, e = rs1:callro('sleep', {2}, {timeout = 1, retries_count = 5})
+e.trace = nil
+e
+fiber.time() - start > 5
+
 _ = test_run:switch("default")
 _ = test_run:cmd("stop server router_1")
 _ = test_run:cmd("cleanup server router_1")
